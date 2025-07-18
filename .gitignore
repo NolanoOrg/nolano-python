@@ -1,0 +1,10 @@
+build/
+dist/
+nolano.egg-info/
+.vscode
+__pycache__/
+**/__pycache__
+environment.yml
+app.py
+.DS_STORE
+**/.DS_STORE
