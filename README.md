@@ -1,7 +1,7 @@
 # Nolano Python SDK
 
 <p align="center">
-  <a href="https://api.nolano.ai">
+  <a href="https://app.nolano.ai">
     <img src="https://img.shields.io/badge/API-Nolano-blue" alt="nolano_badge">
   </a>
   <a href="https://pypi.org/project/nolano/">
@@ -14,7 +14,7 @@
 The Nolano Python SDK provides easy access to Nolano's powerful time series forecasting API, featuring multiple specialized models for different forecasting scenarios. Get accurate predictions with minimal setup using our REST API and Python client.
 
 <p align="center">
-    <a href="https://api.nolano.ai">API Documentation</a>
+    <a href="https://docs.nolano.ai">API Documentation</a>
     ·
     <a href="https://github.com/nolano/nolano-python/issues/new">Report Bug</a>
     ·
@@ -34,7 +34,7 @@ The Nolano Python SDK provides easy access to Nolano's powerful time series fore
 
 To use the Nolano SDK, you'll need an API key from Nolano:
 
-1. Visit [https://api.nolano.ai](https://api.nolano.ai)
+1. Visit [https://app.nolano.ai](https://app.nolano.ai)
 2. Sign up for an account
 3. Generate an API key
 4. Set your API key as an environment variable or pass it directly

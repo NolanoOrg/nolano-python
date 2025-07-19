@@ -3,25 +3,27 @@ import numpy as np
 import os
 import pandas as pd
 from typing import Optional, List, Dict, Any, Union
-
 from .nolano import NolanoClient, NolanoForecast
 from .utils import (
-    convert_sulie_to_nolano_frequency,
-    convert_nolano_to_sulie_frequency,
-    convert_quantiles_to_confidence,
-    convert_confidence_to_quantiles,
     forecast_to_nolano_format,
     nolano_forecast_to_dataframe,
-    validate_nolano_series_format
+    validate_nolano_series_format,
+    convert_confidence_to_quantiles,
+    array_split
 )
 
 __version__ = "0.0.1"
 
-# Export key classes for external use
+# Export key classes and utilities for external use
 __all__ = [
     "Nolano",
-    "NolanoClient",
-    "NolanoForecast"
+    "NolanoClient", 
+    "NolanoForecast",
+    "forecast_to_nolano_format",
+    "nolano_forecast_to_dataframe", 
+    "validate_nolano_series_format",
+    "convert_confidence_to_quantiles",
+    "array_split"
 ]
 
 logger = logging.getLogger("nolano")
@@ -32,7 +34,7 @@ _DEFAULT_NOLANO_API_URL = "https://api.nolano.ai"
 class Nolano:
     """Client for interacting with Nolano's time series forecasting API.
 
-    This class provides methods to generate forecasts using Nolano's specialized
+    This class provides methods to generate forecasts using Nolano's zeroshot
     forecasting models, with support for multiple model types and data frequencies.
     """
 
@@ -47,6 +49,7 @@ class Nolano:
         Raises:
             ValueError: If no API key is provided or found in environment
         """
+        api_url = os.environ.get("NOLANO_API_URL", _DEFAULT_NOLANO_API_URL)
         api_key = api_key or os.environ.get("NOLANO_API_KEY")
         if api_key is None:
             raise ValueError(
@@ -227,22 +230,6 @@ class Nolano:
 
         return results
 
-    def convert_frequency(self, frequency: str, to_format: str = "nolano") -> str:
-        """Convert between frequency formats.
-
-        Args:
-            frequency (str): Input frequency.
-            to_format (str): Target format ("nolano" or "sulie").
-
-        Returns:
-            str: Converted frequency.
-        """
-        if to_format.lower() == "nolano":
-            return convert_sulie_to_nolano_frequency(frequency)
-        elif to_format.lower() == "sulie":
-            return convert_nolano_to_sulie_frequency(frequency)
-        else:
-            raise ValueError("to_format must be 'nolano' or 'sulie'")
 
     def get_model_info(self, model_id: Optional[str] = None) -> Dict[str, str]:
         """Get information about a specific model.
