@@ -8,3 +8,5 @@ environment.yml
 app.py
 .DS_STORE
 **/.DS_STORE
+
+TEST_SUMMARY.md

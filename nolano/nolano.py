@@ -1,3 +1,5 @@
+# Better to use datetime types YYYY-MM-DDTHH:MM:SS for timestamps. For now, it will be a string.
+
 import json
 import requests
 from typing import List, Optional, Dict, Any, Literal, Union
@@ -10,6 +12,13 @@ from .utils import (
     validate_nolano_series_format
 )
 
+# Optional matplotlib import for plotting
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
+
 
 @dataclass
 class NolanoForecast:
@@ -18,6 +27,8 @@ class NolanoForecast:
     lower_bound: List[float]
     median: List[float]
     upper_bound: List[float]
+    historical_timestamps: Optional[List[str]] = None
+    historical_values: Optional[List[float]] = None
     
     def __post_init__(self):
         """Validate input data."""
@@ -34,6 +45,11 @@ class NolanoForecast:
         
         if not all(length == lengths[0] for length in lengths):
             raise ValueError("All forecast arrays must have the same length")
+        
+        # Validate historical data if present
+        if self.historical_timestamps is not None and self.historical_values is not None:
+            if len(self.historical_timestamps) != len(self.historical_values):
+                raise ValueError("Historical timestamps and values must have the same length")
     
     def to_dataframe(self) -> pd.DataFrame:
         """Convert forecast to pandas DataFrame."""
@@ -43,13 +59,78 @@ class NolanoForecast:
             self.median,
             self.upper_bound
         )
+    
+    def plot(self, height: int = 4, width: int = 8, save_path: Optional[str] = None) -> None:
+        """Display actual data, predicted forecasts, and confidence interval.
+        
+        Args:
+            height: Plot height in inches. Defaults to 4.
+            width: Plot width in inches. Defaults to 8.
+            save_path: Path to save the plot as file. If None, displays the plot. Defaults to None.
+            
+        Raises:
+            ImportError: If matplotlib is not installed
+            ValueError: If historical data is not available
+        """
+        if not HAS_MATPLOTLIB:
+            raise ImportError(
+                "matplotlib is required for plotting. Install it with: pip install matplotlib"
+            )
+        
+        if self.historical_values is None or self.historical_timestamps is None:
+            raise ValueError(
+                "Historical data is not available. "
+                "Make sure to use forecast methods that capture historical context."
+            )
+        
+        context_size = len(self.historical_values)
+        horizon_length = len(self.median)
+        forecast_indices = range(context_size, context_size + horizon_length)
+        historical_indices = range(context_size)
+
+        plt.figure(figsize=(width, height))
+        
+        # Plot historical data
+        plt.plot(
+            historical_indices,
+            self.historical_values, 
+            color="royalblue", 
+            label="Historical data"
+        )
+        
+        # Plot median forecast
+        plt.plot(
+            forecast_indices, 
+            self.median, 
+            color="green", 
+            label="Median forecast"
+        )
+        
+        # Plot confidence interval
+        plt.fill_between(
+            forecast_indices,
+            self.lower_bound,
+            self.upper_bound,
+            color="tomato",
+            alpha=0.3,
+            label="Prediction interval"
+        )
+        
+        plt.legend()
+        plt.grid(True)
+        plt.xlabel("Time Period")
+        plt.ylabel("Value")
+        plt.title("Time Series Forecast")
+        
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.close()  # Close the figure to free memory
+        else:
+            plt.show()
 
 
 class NolanoClient:
-    """Client for interacting with Nolano's time series forecasting API."""
-    
-    BASE_URL = "https://api.nolano.ai"
-    
+    """Client for interacting with Nolano's time series forecasting API."""    
     # Available Nolano models
     AVAILABLE_MODELS = [
         "forecast-model-1",  # Primary Forecasting Model
@@ -63,7 +144,7 @@ class NolanoClient:
         "Weekly", "Monthly", "Quarterly", "Yearly"
     ]
     
-    def __init__(self, api_key: str, model_id: Optional[str] = None):
+    def __init__(self, api_url: str, api_key: str, model_id: Optional[str] = None):
         """Initialize Nolano client with API credentials.
         
         Args:
@@ -74,6 +155,7 @@ class NolanoClient:
             ValueError: If model_id is not in available models
         """
         self.api_key = api_key
+        self.api_url = api_url
         self.model_id = model_id or "forecast-model-1"
         
         if self.model_id not in self.AVAILABLE_MODELS:
@@ -111,7 +193,7 @@ class NolanoClient:
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {self.api_key}'
         }
-        url = f"{self.BASE_URL}/verify"
+        url = f"{self.api_url}/verify"
         
         try:
             response = requests.get(
@@ -222,7 +304,7 @@ class NolanoClient:
         
         # Make API request
         headers = self._get_headers(model_id)
-        url = f"{self.BASE_URL}/forecast"
+        url = f"{self.api_url}/forecast"
         
         try:
             response = requests.post(
@@ -241,11 +323,21 @@ class NolanoClient:
         # Parse response
         try:
             result = response.json()
+            
+            # Extract historical data from the input series
+            historical_timestamps = None
+            historical_values = None
+            if series and len(series) > 0:
+                historical_timestamps = series[0].get('timestamps', [])
+                historical_values = series[0].get('values', [])
+            
             return NolanoForecast(
                 forecast_timestamps=result['forecast_timestamps'],
                 lower_bound=result['lower_bound'],
                 median=result['median'],
-                upper_bound=result['upper_bound']
+                upper_bound=result['upper_bound'],
+                historical_timestamps=historical_timestamps,
+                historical_values=historical_values
             )
         except (KeyError, json.JSONDecodeError) as e:
             raise ValueError(f"Invalid response format from Nolano API: {str(e)}") from e

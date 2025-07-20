@@ -57,7 +57,7 @@ class Nolano:
                 "or pass api_key parameter."
             )
         
-        self._client = NolanoClient(api_key, model_id)
+        self._client = NolanoClient(api_url,api_key, model_id)
         logger.info(f"Nolano client initialized with model: {self._client.model_id}")
 
     @property
