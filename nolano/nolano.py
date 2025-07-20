@@ -4,6 +4,11 @@ from typing import List, Optional, Dict, Any, Literal, Union
 from dataclasses import dataclass
 import pandas as pd
 from datetime import datetime
+from .utils import (
+    forecast_to_nolano_format,
+    nolano_forecast_to_dataframe,
+    validate_nolano_series_format
+)
 
 
 @dataclass
@@ -32,12 +37,12 @@ class NolanoForecast:
     
     def to_dataframe(self) -> pd.DataFrame:
         """Convert forecast to pandas DataFrame."""
-        return pd.DataFrame({
-            'timestamp': pd.to_datetime(self.forecast_timestamps),
-            'lower_bound': self.lower_bound,
-            'median': self.median,
-            'upper_bound': self.upper_bound
-        })
+        return nolano_forecast_to_dataframe(
+            self.forecast_timestamps,
+            self.lower_bound,
+            self.median,
+            self.upper_bound
+        )
 
 
 class NolanoClient:
@@ -85,13 +90,74 @@ class NolanoClient:
         """
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': self.api_key
+            'Authorization': f'Bearer {self.api_key}'
         }
         
         if model_id or self.model_id:
             headers['X-Model-Id'] = model_id or self.model_id
             
         return headers
+    
+    def verify_api_key(self) -> Dict[str, Any]:
+        """Verify the API key with Nolano API.
+        
+        Returns:
+            Dict[str, Any]: Verification result with status and details
+            
+        Raises:
+            requests.exceptions.HTTPError: If API request fails
+        """
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.api_key}'
+        }
+        url = f"{self.BASE_URL}/verify"
+        
+        try:
+            response = requests.get(
+                url,
+                headers=headers,
+                timeout=30
+            )
+            response.raise_for_status()
+            
+            # If we get here, the API key is valid
+            result = {
+                'valid': True,
+                'message': 'API key is valid'
+            }
+            
+            # Try to parse JSON response if available
+            try:
+                api_response = response.json()
+                result.update(api_response)
+            except json.JSONDecodeError:
+                # If no JSON response, just return our basic result
+                pass
+                
+            return result
+            
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                return {
+                    'valid': False,
+                    'status': 'unauthorized',
+                    'message': 'Invalid API key'
+                }
+            elif e.response.status_code == 403:
+                return {
+                    'valid': False,
+                    'status': 'forbidden',
+                    'message': 'API key does not have required permissions'
+                }
+            else:
+                raise requests.exceptions.HTTPError(
+                    f"API key verification failed: {str(e)}"
+                ) from e
+        except requests.exceptions.RequestException as e:
+            raise requests.exceptions.HTTPError(
+                f"Network error during API key verification: {str(e)}"
+            ) from e
     
     def forecast(
         self,
@@ -143,12 +209,7 @@ class NolanoClient:
             raise ValueError("forecast_horizon must be positive")
         
         # Validate series structure
-        for i, s in enumerate(series):
-            if 'timestamps' not in s or 'values' not in s:
-                raise ValueError(f"Series {i} must have 'timestamps' and 'values' keys")
-            
-            if len(s['timestamps']) != len(s['values']):
-                raise ValueError(f"Series {i}: timestamps and values must have same length")
+        validate_nolano_series_format(series)
         
         # Prepare request payload
         payload = {
@@ -226,18 +287,8 @@ class NolanoClient:
             raise KeyError(f"Value column '{value_col}' not found in DataFrame")
         
         # Convert DataFrame to Nolano format
-        df_sorted = df.sort_values(timestamp_col)
-        
-        # Convert timestamps to required format
-        timestamps = pd.to_datetime(df_sorted[timestamp_col])
-        timestamp_strings = timestamps.dt.strftime('%Y-%m-%dT%H:%M:%S').tolist()
-        
-        values = df_sorted[value_col].astype(float).tolist()
-        
-        series = [{
-            'timestamps': timestamp_strings,
-            'values': values
-        }]
+        series_data = forecast_to_nolano_format(df, timestamp_col, value_col)
+        series = [series_data]
         
         return self.forecast(
             series=series,

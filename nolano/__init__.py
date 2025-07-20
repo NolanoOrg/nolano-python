@@ -280,6 +280,28 @@ class Nolano:
         self._client = NolanoClient(api_key, model_id or self._client.model_id)
         logger.info("API key updated successfully")
 
+    def verify_api_key(self) -> Dict[str, Any]:
+        """Verify the current API key with Nolano API.
+        
+        This method checks if the current API key is valid and has the necessary
+        permissions to use the Nolano forecasting API.
+        
+        Returns:
+            Dict[str, Any]: Verification result containing:
+                - valid (bool): Whether the API key is valid
+                - status (str): Status of the verification ('success', 'unauthorized', 'forbidden')
+                - message (str): Human-readable message about the verification result
+                
+        Example:
+            >>> client = Nolano(api_key="your_api_key")
+            >>> result = client.verify_api_key()
+            >>> if result['valid']:
+            ...     print("API key is valid!")
+            >>> else:
+            ...     print(f"API key issue: {result['message']}")
+        """
+        return self._client.verify_api_key()
+
     def get_client(self) -> NolanoClient:
         """Get the underlying NolanoClient for advanced usage.
 

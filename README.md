@@ -59,6 +59,14 @@ client = Nolano(api_key="your_api_key_here")
 # Or set environment variable: NOLANO_API_KEY=your_api_key_here
 client = Nolano()
 
+# Verify API key (recommended)
+verification = client.verify_api_key()
+if not verification['valid']:
+    print(f"API key issue: {verification['message']}")
+    exit(1)
+
+print("✅ API key verified successfully!")
+
 # Prepare your time series data
 df = pd.DataFrame({
     'date': pd.date_range(start='2023-01-01', periods=100, freq='D'),
@@ -122,6 +130,31 @@ client = Nolano(
     api_key="your_api_key",      # Optional if NOLANO_API_KEY env var is set
     model_id="forecast-model-1"  # Default model to use
 )
+```
+
+### verify_api_key()
+
+Verify that your API key is valid and has the necessary permissions.
+
+```python
+# Verify API key
+result = client.verify_api_key()
+
+if result['valid']:
+    print("✅ API key is valid!")
+    print(f"Status: {result['status']}")
+else:
+    print(f"❌ API key issue: {result['message']}")
+    print(f"Status: {result['status']}")
+```
+
+**Response Format:**
+```python
+{
+    'valid': bool,          # True if API key is valid
+    'status': str,          # 'success', 'unauthorized', or 'forbidden'  
+    'message': str          # Human-readable status message
+}
 ```
 
 ### forecast()
@@ -233,7 +266,17 @@ nolano_client = client.get_client()
 The SDK provides helpful error messages for common issues:
 
 ```python
+# Verify API key before making requests
 try:
+    result = client.verify_api_key()
+    if not result['valid']:
+        print(f"API key verification failed: {result['message']}")
+        # Handle invalid API key case
+        exit(1)
+    
+    print("API key verified successfully!")
+    
+    # Proceed with forecasting
     forecast = client.forecast(
         dataset=df,
         target_col='sales',
@@ -241,6 +284,7 @@ try:
         forecast_horizon=30,
         data_frequency='Daily'
     )
+    
 except ValueError as e:
     print(f"Parameter error: {e}")
 except KeyError as e:
@@ -249,12 +293,55 @@ except Exception as e:
     print(f"API error: {e}")
 ```
 
+**Common verification scenarios:**
+
+```python
+# Check API key on initialization
+client = Nolano(api_key="your_api_key")
+verification = client.verify_api_key()
+
+if verification['status'] == 'unauthorized':
+    print("Invalid API key - please check your credentials")
+elif verification['status'] == 'forbidden':
+    print("API key lacks required permissions")
+elif verification['status'] == 'success':
+    print("API key verified - ready to forecast!")
+```
+
 ## 📚 Examples
 
 Check out the examples directory for complete usage examples:
 
-- `examples/nolano_example.py` - Comprehensive usage examples
+- `examples/verify_api_key.py` - Quick API key verification script
+- `examples/nolano_example.py` - Comprehensive usage examples with API verification
 - `examples/nolano-forecasting-example.ipynb` - Jupyter notebook tutorial
+
+### Quick API Key Test
+
+To quickly verify your API key is working:
+
+```bash
+# Set your API key
+export NOLANO_API_KEY=your_api_key_here
+
+# Run verification script
+cd examples
+python verify_api_key.py
+```
+
+Or test directly in Python:
+
+```python
+from nolano import Nolano
+
+client = Nolano()
+result = client.verify_api_key()
+
+if result['valid']:
+    print("✅ API key is valid!")
+else:
+    print(f"❌ Issue: {result['message']}")
+```
 
 ## 🤝 Contributing
 
@@ -274,4 +361,4 @@ This project is licensed under the MIT License.
 
 For support and questions:
 - Open an issue on [GitHub](https://github.com/nolano/nolano-python/issues)
-- Contact: [support@nolano.ai](mailto:support@nolano.ai)
+- Contact: [team@nolano.ai](mailto:team@nolano.ai)

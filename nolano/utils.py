@@ -17,63 +17,6 @@ def array_split(arr: List[Any], n: int = 100) -> List[List[Any]]:
         yield arr[i:i + n]
 
 
-def convert_sulie_to_nolano_frequency(sulie_freq: str) -> str:
-    """Convert Sulie frequency notation to Nolano frequency.
-    
-    Args:
-        sulie_freq (str): Sulie frequency notation ("H", "D", "W", "M", "Y")
-        
-    Returns:
-        str: Nolano frequency string
-        
-    Raises:
-        ValueError: If frequency mapping not found
-    """
-    frequency_mapping = {
-        "H": "Hours",
-        "D": "Daily", 
-        "W": "Weekly",
-        "M": "Monthly",
-        "Y": "Yearly"
-    }
-    
-    if sulie_freq not in frequency_mapping:
-        raise ValueError(f"Unsupported frequency: {sulie_freq}. "
-                        f"Supported: {list(frequency_mapping.keys())}")
-    
-    return frequency_mapping[sulie_freq]
-
-
-def convert_nolano_to_sulie_frequency(nolano_freq: str) -> str:
-    """Convert Nolano frequency notation to Sulie frequency.
-    
-    Args:
-        nolano_freq (str): Nolano frequency string 
-        
-    Returns:
-        str: Sulie frequency notation
-        
-    Raises:
-        ValueError: If frequency mapping not found
-    """
-    frequency_mapping = {
-        "Seconds": "S",
-        "Minutes": "T", 
-        "Hours": "H",
-        "Daily": "D",
-        "Weekly": "W", 
-        "Monthly": "M",
-        "Quarterly": "Q",
-        "Yearly": "Y"
-    }
-    
-    if nolano_freq not in frequency_mapping:
-        raise ValueError(f"Unsupported frequency: {nolano_freq}. "
-                        f"Supported: {list(frequency_mapping.keys())}")
-    
-    return frequency_mapping[nolano_freq]
-
-
 def forecast_to_nolano_format(
     df: pd.DataFrame,
     timestamp_col: str,
@@ -141,29 +84,6 @@ def nolano_forecast_to_dataframe(
         'upper_bound': upper_bound
     })
 
-
-def convert_quantiles_to_confidence(quantiles: List[float]) -> float:
-    """Convert Sulie quantile range to Nolano confidence level.
-    
-    Args:
-        quantiles (List[float]): Quantiles (e.g., [0.1, 0.9])
-        
-    Returns:
-        float: Confidence level (e.g., 0.8 for [0.1, 0.9])
-        
-    Raises:
-        ValueError: If quantiles format is invalid
-    """
-    if len(quantiles) != 2:
-        raise ValueError("Exactly two quantiles required (lower and upper)")
-    
-    lower, upper = sorted(quantiles)
-    
-    if not (0 <= lower < upper <= 1):
-        raise ValueError("Quantiles must be between 0 and 1, with lower < upper")
-    
-    confidence = upper - lower
-    return confidence
 
 
 def convert_confidence_to_quantiles(confidence: float) -> List[float]:
