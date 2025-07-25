@@ -104,6 +104,7 @@ def model_comparison_example(client, df):
     
     return successful_forecasts
 
+
 def main():
     """Main example function."""
     print("Nolano SDK Example")
@@ -120,6 +121,7 @@ def main():
         # Create sample data and run model comparison
         df = create_sample_data()
         forecasts = model_comparison_example(client, df)
+        
         print("\n🎉 Example completed!")
     else:
         print(f"❌ Failed: {result['message']}")

@@ -9,7 +9,10 @@ from .utils import (
     nolano_forecast_to_dataframe,
     validate_nolano_series_format,
     convert_confidence_to_quantiles,
-    array_split
+    array_split,
+    mean_absolute_error,
+    weighted_absolute_percentage_error,
+    calculate_forecast_metrics
 )
 
 __version__ = "0.0.1"
@@ -23,7 +26,10 @@ __all__ = [
     "nolano_forecast_to_dataframe", 
     "validate_nolano_series_format",
     "convert_confidence_to_quantiles",
-    "array_split"
+    "array_split",
+    "mean_absolute_error",
+    "weighted_absolute_percentage_error",
+    "calculate_forecast_metrics"
 ]
 
 logger = logging.getLogger("nolano")

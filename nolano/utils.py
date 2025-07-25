@@ -140,3 +140,152 @@ def validate_nolano_series_format(series: List[Dict[str, Any]]) -> bool:
             raise ValueError(f"Series {i}: must have at least one data point")
     
     return True
+
+
+# ================================
+# Evaluation Metrics
+# ================================
+
+def _validate_metric_inputs(actual: List[float], predicted: List[float]) -> None:
+    """Validate inputs for metric calculations.
+    
+    Args:
+        actual (List[float]): Actual observed values
+        predicted (List[float]): Predicted values
+        
+    Raises:
+        ValueError: If inputs are invalid
+        TypeError: If inputs are not numeric
+    """
+    if not isinstance(actual, (list, np.ndarray)) or not isinstance(predicted, (list, np.ndarray)):
+        raise TypeError("Both actual and predicted must be lists or numpy arrays")
+    
+    if len(actual) != len(predicted):
+        raise ValueError(f"Length mismatch: actual ({len(actual)}) != predicted ({len(predicted)})")
+    
+    if len(actual) == 0:
+        raise ValueError("Cannot calculate metrics on empty arrays")
+    
+    # Convert to numpy arrays for easier validation and computation
+    actual_arr = np.array(actual, dtype=float)
+    predicted_arr = np.array(predicted, dtype=float)
+    
+    if np.any(np.isnan(actual_arr)) or np.any(np.isnan(predicted_arr)):
+        raise ValueError("Input arrays cannot contain NaN values")
+    
+    if np.any(np.isinf(actual_arr)) or np.any(np.isinf(predicted_arr)):
+        raise ValueError("Input arrays cannot contain infinite values")
+
+
+def mean_absolute_error(actual: List[float], predicted: List[float]) -> float:
+    """Calculate Mean Absolute Error (MAE) between actual and predicted values.
+    
+    MAE measures the average magnitude of errors in predictions, giving equal weight
+    to all individual differences. It's robust to outliers and easy to interpret.
+    
+    Formula: MAE = (1/n) * Σ|actual_i - predicted_i|
+    
+    Args:
+        actual (List[float]): Actual observed values
+        predicted (List[float]): Predicted values
+        
+    Returns:
+        float: Mean Absolute Error
+        
+    Raises:
+        ValueError: If inputs have different lengths or contain invalid values
+        TypeError: If inputs are not numeric
+        
+    Example:
+        >>> actual = [100, 120, 110, 130]
+        >>> predicted = [95, 125, 115, 125]
+        >>> mae = mean_absolute_error(actual, predicted)
+        >>> print(f"MAE: {mae:.2f}")
+        MAE: 5.00
+    """
+    _validate_metric_inputs(actual, predicted)
+    
+    actual_arr = np.array(actual, dtype=float)
+    predicted_arr = np.array(predicted, dtype=float)
+    
+    mae = np.mean(np.abs(actual_arr - predicted_arr))
+    return float(mae)
+
+
+def weighted_absolute_percentage_error(actual: List[float], predicted: List[float]) -> float:
+    """Calculate Weighted Absolute Percentage Error (WAPE) between actual and predicted values.
+    
+    WAPE is a measure of forecasting accuracy that weights errors by the magnitude of
+    actual values. It's more robust than MAPE when actual values contain zeros or 
+    are close to zero, and provides an overall percentage error across the dataset.
+    
+    Formula: WAPE = (Σ|actual_i - predicted_i|) / (Σ|actual_i|) * 100
+    
+    Args:
+        actual (List[float]): Actual observed values
+        predicted (List[float]): Predicted values
+        
+    Returns:
+        float: Weighted Absolute Percentage Error as a percentage
+        
+    Raises:
+        ValueError: If inputs have different lengths, contain invalid values, 
+                   or if sum of absolute actual values is zero
+        TypeError: If inputs are not numeric
+        
+    Example:
+        >>> actual = [100, 120, 110, 130]
+        >>> predicted = [95, 125, 115, 125]
+        >>> wape = weighted_absolute_percentage_error(actual, predicted)
+        >>> print(f"WAPE: {wape:.2f}%")
+        WAPE: 4.35%
+    """
+    _validate_metric_inputs(actual, predicted)
+    
+    actual_arr = np.array(actual, dtype=float)
+    predicted_arr = np.array(predicted, dtype=float)
+    
+    # Check for zero sum of actual values
+    sum_actual = np.sum(np.abs(actual_arr))
+    if sum_actual == 0:
+        raise ValueError("Cannot calculate WAPE: sum of absolute actual values is zero")
+    
+    sum_errors = np.sum(np.abs(actual_arr - predicted_arr))
+    wape = (sum_errors / sum_actual) * 100
+    
+    return float(wape)
+
+
+def calculate_forecast_metrics(actual: List[float], predicted: List[float]) -> Dict[str, float]:
+    """Calculate multiple forecast evaluation metrics.
+    
+    This function computes various metrics to evaluate forecast accuracy:
+    - MAE: Mean Absolute Error
+    - WAPE: Weighted Absolute Percentage Error
+    
+    Args:
+        actual (List[float]): Actual observed values
+        predicted (List[float]): Predicted values
+        
+    Returns:
+        Dict[str, float]: Dictionary containing calculated metrics
+        
+    Raises:
+        ValueError: If inputs are invalid
+        TypeError: If inputs are not numeric
+        
+    Example:
+        >>> actual = [100, 120, 110, 130]
+        >>> predicted = [95, 125, 115, 125]
+        >>> metrics = calculate_forecast_metrics(actual, predicted)
+        >>> print(f"MAE: {metrics['mae']:.2f}")
+        >>> print(f"WAPE: {metrics['wape']:.2f}%")
+        MAE: 5.00
+        WAPE: 4.35%
+    """
+    _validate_metric_inputs(actual, predicted)
+    
+    return {
+        'mae': mean_absolute_error(actual, predicted),
+        'wape': weighted_absolute_percentage_error(actual, predicted)
+    }

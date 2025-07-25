@@ -70,7 +70,7 @@ print("✅ API key verified successfully!")
 # Prepare your time series data
 df = pd.DataFrame({
     'date': pd.date_range(start='2023-01-01', periods=100, freq='D'),
-    'sales': [100, 102, 98, 105, ...]  # Your time series values
+    'sales': [100, 102, 98, 105, 110, 108, 115, 120, 125, 130, 128, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210, 215, 220, 225, 230, 235, 240, 245, 250, 255, 260, 265, 270, 275, 280, 285, 290, 295, 300, 305, 310, 315, 320, 325, 330, 335, 340, 345, 350, 355, 360, 365, 370, 375, 380, 385, 390, 395, 400, 405, 410, 415, 420, 425, 430, 435, 440, 445, 450, 455, 460, 465, 470, 475, 480, 485, 490, 495, 500, 505, 510, 515, 520, 525, 530, 535, 540, 545, 550, 555, 560, 565, 570, 575]  # Your time series values
 })
 
 # Generate forecast
@@ -78,8 +78,9 @@ forecast = client.forecast(
     dataset=df,
     target_col='sales',
     timestamp_col='date',
-    forecast_horizon=30,
-    data_frequency='Daily'
+    forecast_horizon=25,
+    data_frequency='Daily',
+    model_id='forecast-model-2'
 )
 
 # Access results
@@ -89,6 +90,11 @@ print(f"Upper bound: {forecast.upper_bound}")
 
 # Convert to DataFrame for analysis
 forecast_df = forecast.to_dataframe()
+
+# Evaluate forecast accuracy (when actual values are available)
+actual_values = [580, 585, 590, 595, 600, 605, 610, 615, 620, 625, 630, 635, 640, 645, 650, 655, 660, 665, 670, 675, 680, 685, 690, 695, 700]  # Example actual values for 30-day forecast
+metrics = forecast.evaluate(actual_values)
+print(f"Forecast accuracy - MAE: {metrics['mae']:.2f}, WAPE: {metrics['wape']:.2f}%")
 ```
 
 ## 📊 Available Models
@@ -204,6 +210,12 @@ forecast.upper_bound         # List of upper confidence bound values
 
 # Convert to DataFrame
 df = forecast.to_dataframe()
+
+# Evaluate forecast accuracy
+actual_values = [105, 110, 108, 115, 120]  # Actual values for forecast period
+metrics = forecast.evaluate(actual_values)
+print(f"MAE: {metrics['mae']:.2f}")
+print(f"WAPE: {metrics['wape']:.2f}%")
 ```
 
 ## 📈 Supported Frequencies

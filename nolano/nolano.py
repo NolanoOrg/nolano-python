@@ -127,6 +127,93 @@ class NolanoForecast:
             plt.close()  # Close the figure to free memory
         else:
             plt.show()
+    
+    def evaluate(self, actual_values: List[float], prediction_type: str = 'median') -> Dict[str, float]:
+        """Calculate evaluation metrics comparing forecast to actual values.
+        
+        Args:
+            actual_values (List[float]): Actual observed values for the forecast period
+            prediction_type (str): Which forecast values to use ('median', 'lower_bound', 'upper_bound'). 
+                                 Defaults to 'median'.
+                                 
+        Returns:
+            Dict[str, float]: Dictionary containing evaluation metrics:
+                - mae: Mean Absolute Error
+                - wape: Weighted Absolute Percentage Error (as percentage)
+                
+        Raises:
+            ValueError: If actual_values length doesn't match forecast length or invalid prediction_type
+            ImportError: If required utility functions are not available
+            
+        Example:
+            >>> # After generating a forecast
+            >>> actual_values = [105, 110, 108, 115, 120]  # Actual values for forecast period
+            >>> metrics = forecast.evaluate(actual_values)
+            >>> print(f"MAE: {metrics['mae']:.2f}")
+            >>> print(f"WAPE: {metrics['wape']:.2f}%")
+        """
+        from .utils import calculate_forecast_metrics
+        
+        # Validate inputs
+        if len(actual_values) != len(self.median):
+            raise ValueError(
+                f"Length mismatch: actual_values ({len(actual_values)}) != "
+                f"forecast length ({len(self.median)})"
+            )
+        
+        # Select prediction values based on type
+        if prediction_type == 'median':
+            predicted_values = self.median
+        elif prediction_type == 'lower_bound':
+            predicted_values = self.lower_bound
+        elif prediction_type == 'upper_bound':
+            predicted_values = self.upper_bound
+        else:
+            raise ValueError(
+                f"Invalid prediction_type '{prediction_type}'. "
+                "Must be one of: 'median', 'lower_bound', 'upper_bound'"
+            )
+        
+        # Calculate metrics
+        return calculate_forecast_metrics(actual_values, predicted_values)
+    
+    def mae(self, actual_values: List[float], prediction_type: str = 'median') -> float:
+        """Calculate Mean Absolute Error (MAE) for the forecast.
+        
+        Convenience method for calculating MAE directly.
+        
+        Args:
+            actual_values (List[float]): Actual observed values for the forecast period
+            prediction_type (str): Which forecast values to use. Defaults to 'median'.
+            
+        Returns:
+            float: Mean Absolute Error
+            
+        Example:
+            >>> mae_score = forecast.mae(actual_values)
+            >>> print(f"MAE: {mae_score:.2f}")
+        """
+        metrics = self.evaluate(actual_values, prediction_type)
+        return metrics['mae']
+    
+    def wape(self, actual_values: List[float], prediction_type: str = 'median') -> float:
+        """Calculate Weighted Absolute Percentage Error (WAPE) for the forecast.
+        
+        Convenience method for calculating WAPE directly.
+        
+        Args:
+            actual_values (List[float]): Actual observed values for the forecast period
+            prediction_type (str): Which forecast values to use. Defaults to 'median'.
+            
+        Returns:
+            float: Weighted Absolute Percentage Error as a percentage
+            
+        Example:
+            >>> wape_score = forecast.wape(actual_values)
+            >>> print(f"WAPE: {wape_score:.2f}%")
+        """
+        metrics = self.evaluate(actual_values, prediction_type)
+        return metrics['wape']
 
 
 class NolanoClient:
