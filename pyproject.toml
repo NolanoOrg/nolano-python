@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    {name = "Nolano Team", email = "support@nolano.ai"}
+    {name = "Nolano Team", email = "hello@nolano.ai"}
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -31,9 +31,9 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://api.nolano.ai"
+Documentation = "https://docs.nolano.ai"
 Source = "https://github.com/nolano/nolano-python"
-API = "https://api.nolano.ai"
+API = "https://app.nolano.ai"
 
 [tool.setuptools]
 packages = ["nolano"] 

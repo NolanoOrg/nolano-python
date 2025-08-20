@@ -99,15 +99,6 @@ print(f"Forecast accuracy - MAE: {metrics['mae']:.2f}, WAPE: {metrics['wape']:.2
 
 ## 📊 Available Models
 
-The Nolano API provides four specialized forecasting models:
-
-| Model ID | Description | Best For |
-|----------|-------------|----------|
-| `forecast-model-1` | **Primary Forecasting Model** | General forecasting tasks, trend analysis, business planning |
-| `forecast-model-2` | **Alternative Forecasting Model** | Complex seasonal patterns, anomaly detection |
-| `forecast-model-3` | **Advanced Forecasting Model** | High-frequency data, real-time forecasting, large datasets |
-| `forecast-model-4` | **Next-Generation Model** | Complex patterns, ensemble predictions |
-
 ```python
 # List available models
 models = client.list_models()
@@ -365,7 +356,7 @@ This project is licensed under the MIT License.
 
 ## 🔗 Links
 
-- [Nolano API Documentation](https://api.nolano.ai)
+- [Nolano API Documentation](https://docs.nolano.ai)
 - [GitHub Repository](https://github.com/nolano/nolano-python)
 - [PyPI Package](https://pypi.org/project/nolano/)
 
@@ -373,4 +364,4 @@ This project is licensed under the MIT License.
 
 For support and questions:
 - Open an issue on [GitHub](https://github.com/nolano/nolano-python/issues)
-- Contact: [team@nolano.ai](mailto:team@nolano.ai)
+- Contact: [hello@nolano.ai](mailto:hello@nolano.ai)
